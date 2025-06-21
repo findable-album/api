@@ -1,0 +1,7 @@
+{
+  "recommendations": [
+    "charliermarsh.ruff",     
+    "github.copilot",  
+    "github.copilot-chat"  
+  ]
+}
