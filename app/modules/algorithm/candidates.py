@@ -1,6 +1,9 @@
+from typing import List
+
 from app.models import Image
 from app.modules.algorithm.extract_chosung import extract_chosung, to_compat_jamo
 from app.modules.algorithm.levenshtein_distance import levenshtein_distance
+from app.modules.algorithm.trie import Trie
 
 
 def score_match(query: str, item) -> float:
@@ -73,25 +76,25 @@ def get_candidates_by_queries(query_list: list[str], db: list, threshold: float 
     return final
 
 
-async def get_candidates_chosung_only(query: str) -> list:
+async def get_candidates_chosung_only(query: str) -> List:
     query = to_compat_jamo(query.lower().replace(' ', ''))
+
     items = await Image.all()
-
-    results = []
-
-    print('Query for chosung:', query)
+    desc_trie = Trie()
+    tag_trie = Trie()
 
     for item in items:
         desc_chosung = (item.description_chosung or '').lower().replace(' ', '')
-        tags_chosung = [
-            (tag or '').lower().replace(' ', '') for tag in (item.tags_chosung or [])
-        ]
+        if desc_chosung:
+            desc_trie.insert(desc_chosung, item)
 
-        print(f'Checking item: {item.id}, desc: {desc_chosung}, tags: {tags_chosung}')
+        for tag in item.tags_chosung or []:
+            tag_chosung = (tag or '').lower().replace(' ', '')
+            if tag_chosung:
+                tag_trie.insert(tag_chosung, item)
 
-        if query in desc_chosung:
-            results.append(item)
-        elif any(query in tag for tag in tags_chosung):
-            results.append(item)
+    desc_matches = desc_trie.search_prefix(query)
+    tag_matches = tag_trie.search_prefix(query)
 
-    return results
+    result_map = {item.id: item for item in desc_matches + tag_matches}
+    return list(result_map.values())
