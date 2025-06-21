@@ -40,3 +40,15 @@ async def upload_image(file: UploadFile) -> str:
     )
 
     return image
+
+
+async def delete_image(image_id: int) -> None:
+    image = await Image.get(image_id)
+    if not image:
+        return
+
+    filepath = os.path.join(IMAGE_DIR, os.path.basename(image.path))
+    if os.path.exists(filepath):
+        os.remove(filepath)
+
+    await image.delete()

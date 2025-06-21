@@ -46,8 +46,6 @@ async def search_images(query: str):
 
     candidates = get_candidates_by_queries(queries, image_db)
 
-    print('Candidates found:', candidates)
-
     if not is_chosung_query(query):
         model = get_search_model()
         candidates = rerank_with_bert(query, candidates, model)
